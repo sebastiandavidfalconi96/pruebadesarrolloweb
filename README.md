@@ -53,7 +53,7 @@ En la barra de herramientas de Visual Studio, busca el botón de "Ejecutar" o "D
 
 Acceder a la Aplicación:
 
-Una vez que la aplicación se ejecute, abre un navegador web y accede a la URL proporcionada por Spring Boot. Normalmente, esto sería http://localhost:8080 si estás utilizando la configuración predeterminada.
+Una vez que la aplicación se ejecute, abre un navegador web y accede a la URL proporcionada por Spring Boot. Normalmente, esto sería http://localhost:8090 si estás utilizando la configuración predeterminada.
 
 Ver Resultados:
 
