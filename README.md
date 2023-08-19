@@ -65,8 +65,11 @@ Puedes detener la aplicación en Visual Studio haciendo clic en el botón de "De
 ## Autor
 
 Sebastian Falconi
-Emilio Ñacato
+
 Andrés Estrada
+
+Emilio Ñacato
+
 
 ## Atribuciones
 
