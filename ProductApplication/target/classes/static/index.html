@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product List</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+<header>
+    <h1>Bienvenido a nuestra Tienda</h1>
+    <p>Explora nuestra selección de productos de alta calidad.</p>
+</header>
+
+<div class="container">
+    <div id="productList"></div>
+    <div id="cart">
+        <h2>Carrito de Compras</h2>
+        <ul id="cartItems"></ul>
+        <button onclick="clearCart()">Vaciar Carrito</button>
+    </div>
+    <div id="createProduct">
+        <h2>Crear Nuevo Producto</h2>
+        <form onsubmit="event.preventDefault(); createProduct()">
+            <label for="productName">Nombre:</label>
+            <input type="text" id="productName" required><br>
+            <label for="productEmail">Email:</label>
+            <input type="email" id="productEmail" required><br>
+            <label for="productPhone">Teléfono:</label>
+            <input type="text" id="productPhone" required><br>
+            <label for="productAddress">Dirección:</label>
+            <input type="text" id="productAddress" required><br>
+            <label for="productCity">Ciudad:</label>
+            <input type="text" id="productCity" required><br>
+            <button type="submit">Crear Producto</button>
+        </form>
+    </div>
+    <div id="popupBackground" style="display: none;">
+        <div id="editProductPopup">
+
+            <h2>Editar Producto</h2>
+            <form onsubmit="event.preventDefault(); updateProduct()">
+                <input type="hidden" id="editProductId">
+                <label for="editProductName">Nombre:</label>
+                <input type="text" id="editProductName" required><br>
+                <label for="editProductEmail">Email:</label>
+                <input type="email" id="editProductEmail" required><br>
+                <label for="editProductPhone">Teléfono:</label>
+                <input type="text" id="editProductPhone" required><br>
+                <label for="editProductAddress">Dirección:</label>
+                <input type="text" id="editProductAddress" required><br>
+                <label for="editProductCity">Ciudad:</label>
+                <input type="text" id="editProductCity" required><br>
+                <button type="submit">Guardar Cambios</button>
+                <button type="button" onclick="closePopup()">Cancelar</button>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+
+<script>
+    const cartItems = [];
+    const productListDiv = document.getElementById('productList');
+    const cartItemsList = document.getElementById('cartItems');
+
+    async function fetchProducts() {
+        const response = await fetch('/api/v1/products'); // Cambia la URL según tu configuración
+        const data = await response.json();
+        return data;
+    }
+
+
+
+    async function createProduct() {
+        const productName = document.getElementById('productName').value;
+        const productEmail = document.getElementById('productEmail').value;
+        const productPhone = document.getElementById('productPhone').value;
+        const productAddress = document.getElementById('productAddress').value;
+        const productCity = document.getElementById('productCity').value;
+
+        const response = await fetch('/api/v1/products', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: productName,
+                email: productEmail,
+                phone: productPhone,
+                address: productAddress,
+                city: productCity
+            })
+        });
+
+        const newProduct = await response.json();
+        alert(`Producto ${newProduct.name} creado`);
+        displayProducts();
+    }
+
+    async function displayProducts() {
+        productListDiv.innerHTML = '';
+        const products = await fetchProducts();
+
+        if (products.length === 0) {
+            productListDiv.innerHTML = '<p>No hay productos disponibles.</p>';
+            return;
+        }
+
+        products.forEach(product => {
+        const productDiv = document.createElement('div');
+        productDiv.classList.add('product-card');
+        productDiv.innerHTML = `
+            <h2>${product.name}</h2>
+            <p>Email: ${product.email}</p>
+            <p>Teléfono: ${product.phone}</p>
+            <p>Dirección: ${product.address}</p>
+            <p>Ciudad: ${product.city}</p>
+            <div class="product-actions">
+                <button onclick="addToCart(${product.id})">Agregar al Carrito</button>
+                 <button onclick="showEditForm(${product.id})">Editar</button>
+                <button onclick="deleteProduct(${product.id})">Eliminar Producto</button>
+            </div>
+        `;
+        productListDiv.appendChild(productDiv);
+    });
+    }
+
+    function hideDetails() {
+        const productDetailsDiv = document.getElementById('productDetails');
+        productDetailsDiv.style.display = 'none';
+    }
+
+    function addToCart(productId) {
+        const product = cartItems.find(item => item.id === productId);
+
+        if (!product) {
+            cartItems.push({ id: productId });
+            updateCart();
+        } else {
+            alert('Este producto ya está en el carrito.');
+        }
+    }
+
+    function updateCart() {
+        cartItemsList.innerHTML = cartItems.map(item => `
+            <li>Producto con ID ${item.id} <button onclick="removeFromCart(${item.id})">Eliminar</button></li>
+        `).join('');
+    }
+
+    function removeFromCart(productId) {
+        const index = cartItems.findIndex(item => item.id === productId);
+
+        if (index !== -1) {
+            cartItems.splice(index, 1);
+            updateCart();
+        }
+    }
+
+    async function deleteProduct(productId) {
+        const response = await fetch(`/api/v1/products/${productId}`, {
+            method: 'DELETE'
+        });
+
+        if (response.status === 200) {
+            alert('Producto eliminado exitosamente');
+            displayProducts();
+        } else {
+            alert('Error al eliminar el producto');
+        }
+    }
+
+    function clearCart() {
+        cartItems.length = 0;
+        updateCart();
+    }
+
+    let editingProductId = null;
+const products = []; // Inicializa con un arreglo vacío o con los datos de tus productos
+
+    function showEditForm(productId) {
+        const product = products.find(item => item.id === productId);
+        if (product) {
+            editingProductId = productId;
+            document.getElementById('editProductId').value = productId;
+            document.getElementById('editProductName').value = product.name;
+            document.getElementById('editProductEmail').value = product.email;
+            document.getElementById('editProductPhone').value = product.phone;
+            document.getElementById('editProductAddress').value = product.address;
+            document.getElementById('editProductCity').value = product.city;
+
+            const popupBackground = document.getElementById('popupBackground');
+            popupBackground.style.display = 'flex';
+        }
+    }
+
+    function closePopup() {
+        const popupBackground = document.getElementById('popupBackground');
+        popupBackground.style.display = 'none';
+    }
+// Función para cancelar la edición
+function cancelEdit() {
+    editingProductId = null;
+    const editProductDiv = document.getElementById('editProduct');
+    editProductDiv.style.display = 'none';
+}
+
+// Función para actualizar un producto
+async function updateProduct() {
+    const editedProductName = document.getElementById('editProductName').value;
+    const editedProductEmail = document.getElementById('editProductEmail').value;
+    const editedProductPhone = document.getElementById('editProductPhone').value;
+    const editedProductAddress = document.getElementById('editProductAddress').value;
+    const editedProductCity = document.getElementById('editProductCity').value;
+
+    const response = await fetch(`/api/v1/products/${editingProductId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            name: editedProductName,
+            email: editedProductEmail,
+            phone: editedProductPhone,
+            address: editedProductAddress,
+            city: editedProductCity
+        })
+    });
+
+    if (response.status === 200) {
+        alert('Producto actualizado exitosamente');
+        displayProducts();
+        cancelEdit();
+    } else {
+        alert('Error al actualizar el producto');
+    }
+}
+
+    displayProducts();
+</script>
+</body>
+</html>
